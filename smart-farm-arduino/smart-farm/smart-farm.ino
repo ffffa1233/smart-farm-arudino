@@ -37,6 +37,7 @@
 #define TIME_1SEC 1000
 #define TIME_5SEC 5000
 #define TIME_1MIN 60000
+#define TIME_10MIN 600000
 #define TIME_1HOUR 3600000
 #define TIME_10HOUR 36000000
 #define TIME_12HOUR 43200000
@@ -51,6 +52,15 @@
 #define MSTIMER_LED_OFF_START 3
 #define MSTIMER_LED_OFF_RUNNING 4
 #define MSTIMER_LED_OFF_STOP 5
+
+//Water Pump value
+#define WATER_PUMP_OFF_VAL 0
+#define WATER_PUMP_START_VAL 180
+#define WATER_PUMP_MAX_VAL 255
+#define WATER_PUMP_STOP 0
+#define WATER_PUMP_STOP_TIMER_START 1
+#define WATER_PUMP_START 2
+#define WATER_PUMP_RUNNING 3
 
 
 /* ********************
@@ -166,6 +176,52 @@ void LedOnOffMainfunction() {
   }  
 }
 
+void WaterPumpMainfunction(){
+  static unsigned long tenMinuteTimer;
+  static unsigned long pumpFlag = 0;
+  
+  //하루에 한번 10분, 즉 불 켜진 직후 10분
+  switch(pumpFlag)
+  {
+    case WATER_PUMP_STOP:
+      analogWrite(MOTOR_PWM_PIN, WATER_PUMP_OFF_VAL);
+      if(MSTIMER_LED_ON_RUNNING == LedOffFlag){
+        pumpFlag = WATER_PUMP_STOP_TIMER_START;
+      }
+    break;
+    
+    case WATER_PUMP_STOP_TIMER_START:
+      analogWrite(MOTOR_PWM_PIN, WATER_PUMP_OFF_VAL);
+      tenMinuteTimer = millis() + TIME_10MIN;
+      pumpFlag = WATER_PUMP_START;
+    break;
+    
+    case WATER_PUMP_START:
+      analogWrite(MOTOR_PWM_PIN, WATER_PUMP_START_VAL);
+      if(tenMinuteTimer > millis())
+      {
+        pumpFlag = WATER_PUMP_RUNNING;
+      }
+      else
+      {
+        pumpFlag = WATER_PUMP_STOP;
+      }
+    break;
+    
+    case WATER_PUMP_RUNNING:
+      analogWrite(MOTOR_PWM_PIN, WATER_PUMP_MAX_VAL);
+      if(MSTIMER_LED_ON_RUNNING != LedOffFlag)
+      {
+        pumpFlag = WATER_PUMP_STOP;
+      }
+    break;
+    
+    default:
+      /* do nothing */
+    break;
+  }
+}
+
 void loop() {
   unsigned long now = millis();
 
@@ -192,5 +248,6 @@ void loop() {
   }
   
   LedOnOffMainfunction();
+  WaterPumpMainfunction();
   
 }
