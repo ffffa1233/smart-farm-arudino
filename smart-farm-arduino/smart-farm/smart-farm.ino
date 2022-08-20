@@ -38,7 +38,20 @@
 #define TIME_5SEC 5000
 #define TIME_1MIN 60000
 #define TIME_1HOUR 3600000
+#define TIME_10HOUR 36000000
 #define TIME_12HOUR 43200000
+#define TIME_14HOUR 50400000
+
+//Timer define
+#define MSTIMTER_LED_ON_TIME TIME_10HOUR
+#define MSTIMER_LED_ON_START 0
+#define MSTIMER_LED_ON_RUNNING 1
+#define MSTIMER_LED_ON_STOP 2
+#define MSTIMTER_LED_OFF_TIME TIME_14HOUR
+#define MSTIMER_LED_OFF_START 3
+#define MSTIMER_LED_OFF_RUNNING 4
+#define MSTIMER_LED_OFF_STOP 5
+
 
 /* ********************
  * Sensor Instance
@@ -51,7 +64,7 @@ LiquidCrystal_I2C lcd(LCD_ADDR, LCD_ROW, LCD_COLUMN);
  * ********************/
 int soilHumidity;
 float humidity, temperature;
-int LedOffFlag = 0;
+int LedOffFlag = MSTIMER_LED_ON_START;
 
 /* ********************
  * Custom Function
@@ -95,28 +108,62 @@ void setup() {
   InitPin();
   Serial.begin(9600);
   dht.begin();
-  MsTimer2::set(TIME_12HOUR, LedBlink);
-  MsTimer2::start();
+  //MsTimer2::set(TIME_10HOUR, LedBlink);
+  //MsTimer2::start();
 }
 
 void LedBlink(){
-  Serial.println("ledsadfadsf3,,,");
-  if(LedOffFlag == 0){
-  Serial.println("led3,,,");
-    digitalWrite(LED_PIN, 1); //LED OFF
-    LedOffFlag = 1;
-    MsTimer2::stop();
+  switch(LedOffFlag)
+  {
+    case MSTIMER_LED_ON_RUNNING:
+      LedOffFlag = MSTIMER_LED_ON_STOP;
+      MsTimer2::stop();
+    break;
+    case MSTIMER_LED_OFF_RUNNING:
+      LedOffFlag = MSTIMER_LED_OFF_STOP;
+      MsTimer2::stop();
+    break;
+    default:
+      /* do nothing */
+    break;
   }
-  else if(LedOffFlag == 1){ 
-  Serial.println("led4,,,");   
-    digitalWrite(LED_PIN, 0);//LED ON
-    LedOffFlag = 0;
-  }
-  else if(LedOffFlag == 2){ 
-  Serial.println("led5,,,");
-  digitalWrite(LED_PIN, 0);//LED ON
-    LedOffFlag = 0;
-  }
+}
+
+void LedOnOffMainfunction() {
+  switch(LedOffFlag)
+  {
+    case MSTIMER_LED_ON_START:
+      MsTimer2::set(MSTIMTER_LED_ON_TIME, LedBlink);
+      MsTimer2::start();
+      LedOffFlag = MSTIMER_LED_ON_RUNNING;
+    break;
+    
+    case MSTIMER_LED_ON_RUNNING:
+      /* do nothing */
+    break;
+    
+    case MSTIMER_LED_ON_STOP:
+      LedOffFlag = MSTIMER_LED_OFF_START;
+    break;
+    
+    case MSTIMER_LED_OFF_START:
+      MsTimer2::set(MSTIMTER_LED_OFF_TIME, LedBlink);
+      MsTimer2::start();
+      LedOffFlag = MSTIMER_LED_OFF_RUNNING;
+    break;
+    
+    case MSTIMER_LED_OFF_RUNNING:
+      /* do nothing */
+    break;
+    
+    case MSTIMER_LED_OFF_STOP:
+      LedOffFlag = MSTIMER_LED_OFF_START;
+    break;
+    
+    default:
+      /* do nothing */
+    break;
+  }  
 }
 
 void loop() {
@@ -143,12 +190,7 @@ void loop() {
      lcd.print(temperature);
      lcd.print("C");
   }
-  if(1 == LedOffFlag)
-  {
-    Serial.println("led6,,,");
-    MsTimer2::start();
-    LedOffFlag = 2;
-  }
-
- 
+  
+  LedOnOffMainfunction();
+  
 }
