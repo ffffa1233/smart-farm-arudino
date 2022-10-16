@@ -149,7 +149,7 @@ void LedOnOffMainfunction() {
     break;
     
     case MSTIMER_LED_ON_RUNNING:
-      /* do nothing */
+       digitalWrite(LED_PIN, 0);
     break;
     
     case MSTIMER_LED_ON_STOP:
@@ -163,7 +163,7 @@ void LedOnOffMainfunction() {
     break;
     
     case MSTIMER_LED_OFF_RUNNING:
-      /* do nothing */
+      digitalWrite(LED_PIN, 1);
     break;
     
     case MSTIMER_LED_OFF_STOP:
