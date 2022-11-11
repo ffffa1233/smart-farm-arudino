@@ -35,8 +35,11 @@
 
 //시간
 #define TIME_1SEC 1000
+#define TIME_2SEC 2000
 #define TIME_5SEC 5000
+#define TIME_30SEC 30000
 #define TIME_1MIN 60000
+#define TIME_2MIN 120000
 #define TIME_10MIN 600000
 #define TIME_1HOUR 3600000
 #define TIME_10HOUR 36000000
@@ -75,6 +78,7 @@ LiquidCrystal_I2C lcd(LCD_ADDR, LCD_ROW, LCD_COLUMN);
 int soilHumidity;
 float humidity, temperature;
 int LedOffFlag = MSTIMER_LED_ON_START;
+unsigned long LedTimeRemained = 0;
 
 /* ********************
  * Custom Function
@@ -146,6 +150,7 @@ void LedOnOffMainfunction() {
       MsTimer2::set(MSTIMTER_LED_ON_TIME, LedBlink);
       MsTimer2::start();
       LedOffFlag = MSTIMER_LED_ON_RUNNING;
+      LedTimeRemained = MSTIMTER_LED_ON_TIME + millis();
     break;
     
     case MSTIMER_LED_ON_RUNNING:
@@ -160,6 +165,7 @@ void LedOnOffMainfunction() {
       MsTimer2::set(MSTIMTER_LED_OFF_TIME, LedBlink);
       MsTimer2::start();
       LedOffFlag = MSTIMER_LED_OFF_RUNNING;
+      LedTimeRemained = MSTIMTER_LED_OFF_TIME + millis();
     break;
     
     case MSTIMER_LED_OFF_RUNNING:
@@ -167,7 +173,7 @@ void LedOnOffMainfunction() {
     break;
     
     case MSTIMER_LED_OFF_STOP:
-      LedOffFlag = MSTIMER_LED_OFF_START;
+      LedOffFlag = MSTIMER_LED_ON_START;
     break;
     
     default:
@@ -225,7 +231,7 @@ void WaterPumpMainfunction(){
 void loop() {
   unsigned long now = millis();
 
-  if(0 == (now % TIME_5SEC))
+  if(0 == (now % TIME_1SEC))
   {
      //토양습도 계산
      CalcSoilHumidity();
@@ -238,7 +244,12 @@ void loop() {
      lcd.setCursor(0,0);
      lcd.print("SH:");
      lcd.print(soilHumidity);
-     lcd.print("%");
+     lcd.print("%,");
+     lcd.print((LedTimeRemained - now)/TIME_1MIN);//시간 분단위
+     lcd.print("m");
+     lcd.print(((LedTimeRemained - now)%TIME_1MIN)/TIME_1SEC); //시간 초단위
+     lcd.print("s R");
+     
      lcd.setCursor(0,1);
      lcd.print("H:");
      lcd.print(humidity);
